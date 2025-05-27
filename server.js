@@ -23,7 +23,7 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:5173', 'https://your-vercel-app.vercel.app'], // Replace with your Vercel frontend
+  origin: ['http://localhost:5173', 'https://rtrp-temp.vercel.app'], // Replace with your Vercel frontend
   credentials: true
 }));
 app.use(express.json());

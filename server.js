@@ -22,9 +22,15 @@ const app = express();
 
 // 🛡️ CORS
 app.use(cors({
-  origin: 'https://rtrp-temp.vercel.app', // ✅ Your frontend URL
+  origin: 'https://rtrp-temp.vercel.app',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+}));
+
+// 🔁 Handle OPTIONS preflight requests
+app.options('*', cors({
+  origin: 'https://rtrp-temp.vercel.app',
+  credentials: true,
 }));
 
 // JSON parsing

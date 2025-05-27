@@ -6,31 +6,31 @@ import authRoutes from './routes/auth.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// Load environment variables
+// Load env
 dotenv.config();
 
-// Handle __dirname in ES modules
+// __dirname fix
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Ensure required environment variables
+// Check env
 if (!process.env.MONGODB_URI) {
   throw new Error('❌ Missing MONGODB_URI in .env');
 }
 
-// Initialize app
 const app = express();
 
-// Middleware
+// 🛡️ CORS
 app.use(cors({
-  origin: ['https://rtrp-temp.vercel.app'],
+  origin: 'https://rtrp-temp.vercel.app', // ✅ Your frontend URL
+  credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true
 }));
+
+// JSON parsing
 app.use(express.json());
 
-// Disable caching for sensitive data
+// 🔒 Cache control
 app.use((req, res, next) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   res.set('Expires', '-1');
@@ -38,27 +38,24 @@ app.use((req, res, next) => {
   next();
 });
 
-// MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
+// MongoDB connect
+mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log('✅ MongoDB connected successfully'))
   .catch(err => {
     console.error('❌ MongoDB connection error:', err.message);
     process.exit(1);
   });
 
-// Routes
+// API routes
 app.use('/api/auth', authRoutes);
 
-// Serve static files (React)
+// Static React files
 app.use(express.static(path.join(__dirname, 'dist')));
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
-// Server Start
+// Launch
 const PORT = process.env.PORT || 4000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);

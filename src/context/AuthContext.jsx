@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 
-// Set base URL for API requests
-axios.defaults.baseURL = 'http://localhost:4000';
+// Set base URL for API requests (pointing to Render backend)
+axios.defaults.baseURL = 'https://rtrp-temp-1.onrender.com';
 
 const AuthContext = createContext();
 
@@ -14,13 +14,9 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Check if user is already logged in (token exists in localStorage)
     const token = localStorage.getItem('token');
     if (token) {
-      // Set default Authorization header for all axios requests
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      
-      // Fetch user profile
       fetchUserProfile();
     } else {
       setLoading(false);
@@ -34,7 +30,7 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     } catch (err) {
       console.error('Failed to fetch user profile:', err);
-      logout(); // Token might be invalid or expired
+      logout();
       setLoading(false);
     }
   };
@@ -44,13 +40,8 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await axios.post('/api/auth/login', { email, password });
       const { token, user: userData } = response.data;
-      
-      // Store token in localStorage
       localStorage.setItem('token', token);
-      
-      // Set default Authorization header for all axios requests
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      
       setUser(userData);
       return { success: true };
     } catch (err) {
@@ -65,13 +56,8 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await axios.post('/api/auth/signup', { email, password, name });
       const { token, user: userData } = response.data;
-      
-      // Store token in localStorage
       localStorage.setItem('token', token);
-      
-      // Set default Authorization header for all axios requests
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      
       setUser(userData);
       return { success: true };
     } catch (err) {
@@ -82,12 +68,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
-    // Remove token from localStorage
     localStorage.removeItem('token');
-    
-    // Remove Authorization header
     delete axios.defaults.headers.common['Authorization'];
-    
     setUser(null);
   };
 
@@ -96,13 +78,8 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await axios.post('/api/auth/google', { tokenId });
       const { token, user: userData } = response.data;
-      
-      // Store token in localStorage
       localStorage.setItem('token', token);
-      
-      // Set default Authorization header for all axios requests
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      
       setUser(userData);
       return { success: true };
     } catch (err) {
@@ -117,13 +94,8 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await axios.post('/api/auth/github', { code });
       const { token, user: userData } = response.data;
-      
-      // Store token in localStorage
       localStorage.setItem('token', token);
-      
-      // Set default Authorization header for all axios requests
       axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      
       setUser(userData);
       return { success: true };
     } catch (err) {

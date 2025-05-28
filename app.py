@@ -17,7 +17,18 @@ load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__, static_folder='build')
-CORS(app, resources={r"/*": {"origins": ["https://rtrp-temp.vercel.app", "http://localhost:5173"]}})
+CORS(app, resources={
+    r"/*": {
+        "origins": [
+            "https://rtrp-temp-git-main-chandumenda6465-gmailcoms-projects.vercel.app",
+            "https://rtrp-temp.vercel.app",
+            "http://localhost:5173"
+        ],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"],
+        "supports_credentials": True
+    }
+})
 
 # Add no-cache headers globally
 @app.after_request
@@ -25,6 +36,10 @@ def add_header(response):
     response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
     response.headers['Pragma'] = 'no-cache'
     response.headers['Expires'] = '0'
+    response.headers['Access-Control-Allow-Origin'] = 'https://rtrp-temp-git-main-chandumenda6465-gmailcoms-projects.vercel.app'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+    response.headers['Access-Control-Allow-Credentials'] = 'true'
     return response
 
 

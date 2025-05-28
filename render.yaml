@@ -12,10 +12,12 @@ services:
       - key: OPENROUTER_API_KEY
         sync: false
       - key: CORS_ORIGIN
-        value: https://rtrp-temp.vercel.app
+        value: https://rtrp-temp-git-main-chandumenda6465-gmailcoms-projects.vercel.app
       - key: JWT_SECRET
         sync: false
       - key: PORT
         value: 10000
+      - key: FLASK_ENV
+        value: production
     healthCheckPath: /api/health
     autoDeploy: true 

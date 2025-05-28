@@ -19,7 +19,7 @@ const Dashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const response = await fetch('http://localhost:4000/api/dashboard-data');
+      const response = await fetch('http://localhost:2000/api/dashboard-data');
       const data = await response.json();
       setAttendanceData(data.attendance);
       setTimetableData(data.timetable);

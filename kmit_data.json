@@ -1,15 +1,15 @@
 {
     "attendance": [],
     "sessions": [
-        "Present",
-        "Present",
         "Absent",
+        "Present",
+        "Present",
         "Present",
         "Present",
         "Absent",
         "Absent"
     ],
-    "overall_attendance_percentage": 72.83,
+    "overall_attendance_percentage": 65.53,
     "timetable": [
         {
             "header": "Monday",

@@ -16,7 +16,7 @@ const ChatHistory = ({ userId, onSelect, visible, onToggle }) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`http://127.0.0.1:4000/api/chat/history/${userId}`);
+      const response = await fetch(`http://127.0.0.1:2000/api/chat/history/${userId}`);
       const data = await response.json();
       
       if (!response.ok) {
@@ -41,7 +41,7 @@ const ChatHistory = ({ userId, onSelect, visible, onToggle }) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`http://127.0.0.1:4000/api/chat/history/${userId}`, {
+      const response = await fetch(`http://127.0.0.1:2000/api/chat/history/${userId}`, {
         method: 'DELETE',
       });
       const data = await response.json();

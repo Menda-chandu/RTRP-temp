@@ -12,7 +12,7 @@ const Dashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const response = await axios.get('http://localhost:3000/api/dashboard-data');
+      const response = await axios.get('http://localhost:2000/api/dashboard-data');
       setDashboardData(response.data);
     } catch (err) {
       setError('Failed to fetch dashboard data');
@@ -24,7 +24,7 @@ const Dashboard = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.post('http://localhost:3000/api/update-dashboard', {
+      const response = await axios.post('http://localhost:2000/api/update-dashboard', {
         mobile_number: mobileNumber
       });
       setDashboardData(response.data.data);

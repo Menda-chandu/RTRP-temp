@@ -26,7 +26,7 @@ const ChatHistoryPage = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`http://127.0.0.1:4000/api/chat/history/${user._id}`);
+      const response = await fetch(`http://127.0.0.1:2000/api/chat/history/${user._id}`);
       const data = await response.json();
       
       if (!response.ok) {

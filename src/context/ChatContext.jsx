@@ -27,7 +27,7 @@ export const ChatProvider = ({ children }) => {
     setError(null);
     try {
       // Fetch chat history from the backend with user ID
-      const response = await axios.get(`http://127.0.0.1:4000/api/chat/history/${user?._id}`);
+      const response = await axios.get(`http://127.0.0.1:2000/api/chat/history/${user?._id}`);
       setMessages(response.data.messages || []); // Ensure messages are an array
     } catch (err) {
       console.error('Failed to fetch chat history:', err);
@@ -54,7 +54,7 @@ export const ChatProvider = ({ children }) => {
 
     try {
       // Send the query to the Flask backend with user ID
-      const response = await axios.post('http://127.0.0.1:4000/api/chat', { 
+      const response = await axios.post('http://127.0.0.1:2000/api/chat', { 
         query: text,
         userId: user?._id 
       });
@@ -101,7 +101,7 @@ export const ChatProvider = ({ children }) => {
   const clearChatHistory = async () => {
     try {
       setIsLoading(true);
-      await axios.delete(`http://127.0.0.1:4000/api/chat/history/${user?._id}`);
+      await axios.delete(`http://127.0.0.1:2000/api/chat/history/${user?._id}`);
       setMessages([]);
     } catch (error) {
       console.error('Error clearing chat history:', error);
@@ -114,7 +114,7 @@ export const ChatProvider = ({ children }) => {
   const rateMessage = async (messageId, rating) => {
     try {
       // Send the rating to the backend with user ID
-      await axios.post('http://127.0.0.1:4000/api/rate', { 
+      await axios.post('http://127.0.0.1:2000/api/rate', { 
         messageId, 
         rating,
         userId: user?._id 

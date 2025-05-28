@@ -337,5 +337,5 @@ def serve_react_app(path):
 
 
 if __name__ == "__main__":
-    PORT = int(os.getenv("PORT", 4000))
+    PORT = int(os.getenv("PORT", 2000))
     app.run(debug=bool(os.getenv("FLASK_DEBUG", False)), port=PORT)

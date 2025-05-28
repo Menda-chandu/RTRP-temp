@@ -17,7 +17,7 @@ load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__, static_folder='build')
-CORS(app, resources={r"/*": {"origins": os.getenv("CORS_ORIGIN", "http://localhost:5173")}})
+CORS(app, resources={r"/*": {"origins": ["https://rtrp-temp.vercel.app", "http://localhost:5173"]}})
 
 # Add no-cache headers globally
 @app.after_request
@@ -325,6 +325,24 @@ def rate_message():
     except Exception as e:
         print(f"Rate error: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    try:
+        # Test MongoDB connection
+        client.admin.command('ping')
+        return jsonify({
+            'status': 'healthy',
+            'database': 'connected',
+            'timestamp': datetime.now().isoformat()
+        }), 200
+    except Exception as e:
+        return jsonify({
+            'status': 'unhealthy',
+            'error': str(e),
+            'timestamp': datetime.now().isoformat()
+        }), 500
 
 
 # Serve React App

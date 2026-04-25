@@ -2,6 +2,7 @@ services:
   - type: web
     name: college-genie-backend
     env: python
+    rootDirectory: apps/chat
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
     envVars:

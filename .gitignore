@@ -1,4 +1,37 @@
+# Dependencies
+node_modules/
+apps/*/node_modules/
+venv/
+apps/chat/venv/
+
 # Environment files
 .env
 .env.local
 .env*.local
+
+# Production
+dist/
+apps/web/dist/
+build/
+apps/chat/build/
+
+# Logs
+*.log
+apps/*/*.log
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+
+# Large data (optional, but good practice for production)
+# data/*.json

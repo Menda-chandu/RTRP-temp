@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  auth:
+    build:
+      context: ./apps/auth
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/college-chatbot
+      - AUTH_PORT=4000
+      - JWT_SECRET=${JWT_SECRET:-campus-genie-secret-key}
+    depends_on:
+      - mongodb
+
+  chat:
+    build:
+      context: ./apps/chat
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/college-chatbot
+      - CHAT_PORT=2000
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
+    depends_on:
+      - mongodb
+
+  web:
+    build:
+      context: ./apps/web
+    ports:
+      - "8080:80"
+    depends_on:
+      - auth
+      - chat
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+volumes:
+  mongodb_data:

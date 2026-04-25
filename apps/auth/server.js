@@ -64,7 +64,8 @@ app.get('*', (req, res) => {
 });
 
 // Launch
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.AUTH_PORT || process.env.PORT || 4000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🚀 Auth Server running on port ${PORT}`);
 });
+

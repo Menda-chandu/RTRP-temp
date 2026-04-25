@@ -1,21 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { Calendar, Book, Users, Award, Clock, BookOpen, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { Calendar, Book, Users, Award, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 
 const Dashboard = () => {
   const { user } = useAuth();
-  const [attendanceData, setAttendanceData] = useState({
-    timestamp: '',
-    sessions: []
-  });
+  const [attendanceData, setAttendanceData] = useState({ timestamp: '', sessions: [] });
   const [timetableData, setTimetableData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Fetch data when component mounts
-    fetchDashboardData();
-  }, []);
+  useEffect(() => { fetchDashboardData(); }, []);
 
   const fetchDashboardData = async () => {
     try {
@@ -25,184 +19,115 @@ const Dashboard = () => {
       setTimetableData(data.timetable);
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-      setLoading(false);
-    }
-  };
-
-  const getAttendanceIcon = (status) => {
-    switch (status) {
-      case 'Present':
-        return <CheckCircle className="text-green-500" />;
-      case 'Absent':
-        return <XCircle className="text-red-500" />;
-      default:
-        return <AlertCircle className="text-yellow-500" />;
-    }
-  };
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        delayChildren: 0.3,
-        staggerChildren: 0.2
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: { duration: 0.5 }
+       console.error('Error:', error);
+       setLoading(false);
     }
   };
 
   const stats = [
-    {
-      title: 'Upcoming Classes',
-      value: '3',
-      icon: Calendar,
-      color: 'text-blue-500'
-    },
-    {
-      title: 'Assignments Due',
-      value: '2',
-      icon: Book,
-      color: 'text-green-500'
-    },
-    {
-      title: 'Study Groups',
-      value: '4',
-      icon: Users,
-      color: 'text-purple-500'
-    },
-    {
-      title: 'Achievement Points',
-      value: '850',
-      icon: Award,
-      color: 'text-yellow-500'
-    }
+    { title: 'Classes Today', value: '06', icon: Calendar },
+    { title: 'Active Assignments', value: '02', icon: Book },
+    { title: 'Research Teams', value: '03', icon: Users },
+    { title: 'Total Credits', value: '18', icon: Award }
   ];
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="w-8 h-8 border-2 border-primary/20 border-t-primary rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
     <motion.div
-      className="container mx-auto px-4 py-8"
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="container mx-auto px-6 py-16 max-w-6xl"
     >
-      {/* Welcome Section */}
-      <motion.div 
-        className="mb-8"
-        variants={itemVariants}
-      >
-        <h1 className="text-3xl font-bold mb-2">
-          Welcome back, {user?.name || 'Student'}!
-        </h1>
-        <p className="text-muted-foreground">
-          Here's what's happening with your academic journey today.
-        </p>
-      </motion.div>
+      {/* Elegant Header */}
+      <div className="mb-20">
+         <h1 className="text-5xl font-serif text-primary leading-tight mb-4">
+            Hello, <span className="italic">{user?.name?.split(' ')[0]}</span>.
+         </h1>
+         <p className="text-muted-foreground text-lg max-w-xl font-medium leading-relaxed">
+            Your academic overview for today at Keshav Memorial Institute of Technology. 
+            All records are synchronized with the central portal.
+         </p>
+      </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {stats.map((stat, index) => (
-          <motion.div
-            key={stat.title}
-            variants={itemVariants}
-            className="p-6 rounded-xl bg-card border border-border shadow-sm hover:shadow-md transition-shadow duration-200"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <stat.icon className={`w-8 h-8 ${stat.color}`} />
-              <span className="text-2xl font-bold">{stat.value}</span>
-            </div>
-            <h3 className="text-sm font-medium text-muted-foreground">
-              {stat.title}
-            </h3>
-          </motion.div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-24">
+        {stats.map((stat, i) => (
+          <div key={stat.title} className="group cursor-default">
+             <p className="text-[10px] font-black text-muted-foreground/50 uppercase tracking-[0.2em] mb-4 group-hover:text-primary transition-colors">
+               {stat.title}
+             </p>
+             <div className="flex items-baseline gap-4">
+                <span className="text-4xl font-serif font-bold text-primary">{stat.value}</span>
+                <div className="h-[2px] flex-1 bg-border/50 group-hover:bg-primary/20 transition-colors" />
+             </div>
+          </div>
         ))}
       </div>
 
-      {/* Attendance Section */}
-      <section className="mb-8">
-        <div className="flex items-center mb-4">
-          <Calendar className="mr-2 text-primary" />
-          <h2 className="text-2xl font-semibold">Today's Attendance</h2>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {attendanceData.sessions.map((status, index) => (
-            <div
-              key={index}
-              className="bg-white dark:bg-gray-800 rounded-lg shadow p-4"
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Session {index + 1}
-                  </p>
-                  <p className="font-semibold">{status}</p>
+      <div className="grid lg:grid-cols-2 gap-24">
+         {/* Attendance Section */}
+         <section>
+            <div className="flex items-center justify-between mb-10 pb-4 border-b border-border">
+               <h2 className="text-2xl font-serif text-primary">Daily Attendance</h2>
+               <span className="text-[10px] font-bold text-muted-foreground uppercase">{attendanceData.timestamp}</span>
+            </div>
+            <div className="space-y-4">
+              {attendanceData.sessions.map((status, index) => (
+                <div key={index} className="flex items-center justify-between py-4 group">
+                  <div className="flex items-center gap-6">
+                     <span className="text-xs font-bold text-muted-foreground/40 tabular-nums">0{index + 1}</span>
+                     <span className="text-base font-semibold group-hover:text-primary transition-colors">Session Slot</span>
+                  </div>
+                  <div className={`flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
+                     status === 'Present' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+                  }`}>
+                     {status === 'Present' ? <CheckCircle size={10} /> : <XCircle size={10} />}
+                     {status}
+                  </div>
                 </div>
-                {getAttendanceIcon(status)}
-              </div>
+              ))}
             </div>
-          ))}
-        </div>
-        <p className="text-sm text-gray-500 mt-2">
-          Last updated: {attendanceData.timestamp}
-        </p>
-      </section>
+         </section>
 
-      {/* Timetable Section */}
-      <section>
-        <div className="flex items-center mb-4">
-          <Clock className="mr-2 text-primary" />
-          <h2 className="text-2xl font-semibold">Weekly Timetable</h2>
-        </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-          {timetableData.map((day, index) => (
-            <div key={index} className="border-b last:border-b-0">
-              <div className="p-4 bg-gray-50 dark:bg-gray-700 font-semibold">
-                {day.header}
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <tbody>
-                    {day.rows.map((row, rowIndex) => (
-                      <tr
-                        key={rowIndex}
-                        className="border-b last:border-b-0 hover:bg-gray-50 dark:hover:bg-gray-700"
-                      >
-                        {row.map((cell, cellIndex) => (
-                          <td
-                            key={cellIndex}
-                            className="p-4 text-sm whitespace-nowrap"
-                          >
-                            {cell}
-                          </td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+         {/* Timetable Section */}
+         <section>
+            <div className="flex items-center justify-between mb-10 pb-4 border-b border-border">
+               <h2 className="text-2xl font-serif text-primary">Core Schedule</h2>
+               <Clock size={18} className="text-muted-foreground" />
             </div>
-          ))}
-        </div>
-      </section>
+            <div className="space-y-6">
+              {timetableData.map((day, index) => (
+                <div key={index} className="space-y-3">
+                  <h3 className="text-[10px] font-black text-primary/40 uppercase tracking-[0.3em]">{day.header}</h3>
+                  <div className="paper-secondary rounded-2xl p-2">
+                    <table className="w-full text-left">
+                      <tbody>
+                        {day.rows.map((row, rowIndex) => (
+                          <tr key={rowIndex} className="border-b border-border/20 last:border-b-0 hover:bg-white/50 transition-colors">
+                            {row.map((cell, cellIndex) => (
+                              <td key={cellIndex} className="p-4 text-sm font-medium text-foreground/80 first:font-bold first:text-primary">
+                                {cell}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ))}
+            </div>
+         </section>
+      </div>
     </motion.div>
   );
 };
 
-export default Dashboard; 
+export default Dashboard;

@@ -1,28 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, ThumbsUp, ThumbsDown, Copy, RefreshCw } from 'lucide-react';
+import { Send, Copy, RefreshCw, Trash2, User, ChevronRight } from 'lucide-react';
 import { useChat } from '../context/ChatContext';
 import { useAuth } from '../context/AuthContext';
 
 const Chat = () => {
-  const { messages, isLoading, sendMessage, clearChat, rateMessage } = useChat();
+  const { messages, isLoading, sendMessage, clearChat } = useChat();
   const { user } = useAuth();
   const [input, setInput] = useState('');
-  const [isClearing, setIsClearing] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
-  // Auto-scroll to bottom when messages change
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  // Focus input on mount
-  useEffect(() => {
-    if (inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, []);
+  useEffect(() => scrollToBottom(), [messages]);
+  useEffect(() => inputRef.current?.focus(), []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -30,225 +20,160 @@ const Chat = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!input.trim()) return;
-
+    if (!input.trim() || isLoading) return;
     try {
-      // Send the message to the backend via useChat context
-      await sendMessage(input); // This triggers the POST request to Flask
-      setInput(''); // Clear the input field after sending
+      await sendMessage(input);
+      setInput('');
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('Error:', error);
     }
   };
 
-  const handleClearChat = async () => {
-    setIsClearing(true);
-    await clearChat(); // Clear all chat messages
-    setIsClearing(false);
-  };
-
-  const handleCopyResponse = (text) => {
-    navigator.clipboard.writeText(text).then(
-      () => alert('Response copied to clipboard!'),
-      (err) => console.error('Failed to copy text:', err)
-    );
-  };
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        delayChildren: 0.3,
-        staggerChildren: 0.1,
-      },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: {
-      y: 0,
-      opacity: 1,
-      transition: { duration: 0.5 },
-    },
-  };
-
-  // Function to render message with markdown
   const renderMessageContent = (text) => {
-    // Simple markdown-like rendering for links
     const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
     const parts = [];
     let lastIndex = 0;
     let match;
 
     while ((match = linkRegex.exec(text)) !== null) {
-      if (match.index > lastIndex) {
-        parts.push(text.substring(lastIndex, match.index));
-      }
-
+      if (match.index > lastIndex) parts.push(text.substring(lastIndex, match.index));
       parts.push(
-        <a
-          key={match.index}
-          href={match[2]}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-primary hover:underline"
-        >
+        <a key={match.index} href={match[2]} target="_blank" rel="noopener noreferrer" className="text-primary font-bold underline decoration-primary/40 hover:decoration-primary">
           {match[1]}
         </a>
       );
-
       lastIndex = match.index + match[0].length;
     }
-
-    if (lastIndex < text.length) {
-      parts.push(text.substring(lastIndex));
-    }
-
+    if (lastIndex < text.length) parts.push(text.substring(lastIndex));
     return parts.length ? parts : text;
   };
 
   return (
-    <div className="min-h-[calc(100vh-4rem)] flex flex-col">
-      {/* Header */}
-      <motion.div
-        className="flex items-center justify-between mb-4 p-4 glass rounded-xl"
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <div>
-          <h1 className="text-2xl font-bold">Chat with Campus Genie</h1>
-          <p className="text-muted-foreground">Ask anything about your college</p>
+    <div className="flex flex-col h-[calc(100vh-4rem)] bg-background max-w-4xl mx-auto w-full">
+      {/* Thread Header */}
+      <div className="flex items-center justify-between px-6 py-8">
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-serif text-primary truncate max-w-sm">
+             {messages.length > 0 ? messages[0].text.substring(0, 40) + '...' : 'New Conversation'}
+          </h1>
         </div>
-        <motion.button
-          onClick={handleClearChat}
-          className="p-2 rounded-full hover:bg-muted transition-colors duration-200 flex items-center"
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          disabled={isClearing || messages.length === 0}
+        <button 
+          onClick={clearChat}
+          className="p-2 text-muted-foreground hover:text-destructive transition-colors rounded-lg hover:bg-destructive/5"
+          title="Clear thread"
         >
-          <RefreshCw size={20} className={`${isClearing ? 'animate-spin' : ''}`} />
-          <span className="ml-2 hidden sm:inline">Clear Chat</span>
-        </motion.button>
-      </motion.div>
+          <Trash2 size={18} />
+        </button>
+      </div>
 
-      {/* Chat Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
+      {/* Message Feed */}
+      <div className="flex-1 overflow-y-auto px-6 space-y-12 pb-20 scroll-smooth">
         {messages.length === 0 ? (
-          <motion.div
-            className="flex flex-col items-center justify-center h-full text-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.3 }}
-          >
-            <div className="w-24 h-24 mb-6 rounded-full bg-primary/10 flex items-center justify-center">
-              <div className="text-4xl">🧞</div>
+          <div className="h-full flex flex-col items-start justify-center pb-20">
+            <h2 className="text-4xl font-serif text-primary mb-8 animate-soft-reveal">
+               Good afternoon, <span className="italic">{user?.name?.split(' ')[0]}</span>.
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl">
+               {[
+                 { q: "What's my attendance status?", i: "Check my records" },
+                 { q: "When is the next placement drive?", i: "Career updates" },
+                 { q: "How to register for Tech Fest?", i: "Events & Festivals" },
+                 { q: "Show me the 3rd year CSE timetable", i: "Schedules" }
+               ].map((item, i) => (
+                 <button 
+                   key={i}
+                   onClick={() => setInput(item.q)}
+                   className="flex items-center justify-between p-4 rounded-xl border border-border hover:bg-secondary/30 transition-all text-left text-sm group"
+                 >
+                    <div>
+                       <p className="font-bold text-primary">{item.q}</p>
+                       <p className="text-muted-foreground text-xs">{item.i}</p>
+                    </div>
+                    <ChevronRight size={16} className="text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                 </button>
+               ))}
             </div>
-            <h2 className="text-2xl font-bold mb-2">Start a Conversation</h2>
-            <p className="text-muted-foreground max-w-md">
-              Ask Campus Genie anything about your college, courses, facilities, or events.
-            </p>
-          </motion.div>
+          </div>
         ) : (
-          <motion.div variants={containerVariants} initial="hidden" animate="visible">
-            <AnimatePresence>
+          <div className="space-y-12">
+            <AnimatePresence initial={false}>
               {messages.map((message) => (
                 <motion.div
                   key={message.id}
-                  variants={itemVariants}
-                  initial="hidden"
-                  animate="visible"
-                  exit={{ opacity: 0, y: 20 }}
-                  layout
-                  className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'} mb-4`}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className={`flex gap-6 ${message.sender === 'user' ? 'justify-start' : 'justify-start'}`}
                 >
-                  <div
-                    className={`
-                      max-w-[80%] rounded-2xl p-4 
-                      ${message.sender === 'user'
-                        ? 'bg-primary text-primary-foreground ml-auto rounded-br-sm'
-                        : 'glass dark:bg-secondary/30 mr-auto rounded-bl-sm'
-                      }
-                    `}
-                  >
-                    <div className="prose dark:prose-invert">
-                      {renderMessageContent(message.text)}
-                    </div>
+                  <div className={`w-8 h-8 rounded-lg shrink-0 mt-1 flex items-center justify-center font-bold text-xs ${
+                    message.sender === 'user' ? 'bg-secondary text-primary' : 'bg-primary text-white'
+                  }`}>
+                    {message.sender === 'user' ? user?.name?.charAt(0) : 'G'}
+                  </div>
+                  
+                  <div className="flex-1 space-y-2 group">
+                     {message.sender === 'user' && <p className="text-xs font-bold text-muted-foreground uppercase tracking-widest">{user?.name}</p>}
+                     {message.sender === 'bot' && <p className="text-xs font-bold text-primary uppercase tracking-widest">Campus Genie</p>}
+                     
+                     <div className={`text-[17px] leading-relaxed text-foreground/90 font-sans ${message.isLoading ? 'animate-pulse' : ''}`}>
+                        {message.isLoading ? (
+                           <div className="flex gap-1 py-1">
+                              {[0, 1, 2].map(i => <div key={i} className="w-1.5 h-1.5 bg-border rounded-full animate-bounce" style={{ animationDelay: i*150+'ms' }} />)}
+                           </div>
+                        ) : renderMessageContent(message.text)}
+                     </div>
 
-                    {message.sender === 'bot' && (
-                      <div className="flex items-center justify-end mt-2 space-x-2">
-                        <button
-                          onClick={() => rateMessage(message.id, 'up')}
-                          className={`p-1 rounded-full hover:bg-background/20 transition-colors duration-200 ${
-                            message.rating === 'up' ? 'text-green-500' : ''
-                          }`}
-                        >
-                          <ThumbsUp size={14} />
-                        </button>
-                        <button
-                          onClick={() => rateMessage(message.id, 'down')}
-                          className={`p-1 rounded-full hover:bg-background/20 transition-colors duration-200 ${
-                            message.rating === 'down' ? 'text-red-500' : ''
-                          }`}
-                        >
-                          <ThumbsDown size={14} />
-                        </button>
-                        <button
-                          onClick={() => handleCopyResponse(message.text)}
-                          className="p-1 rounded-full hover:bg-background/20 transition-colors duration-200"
-                        >
-                          <Copy size={14} />
-                        </button>
-                      </div>
-                    )}
+                     {message.sender === 'bot' && !message.isLoading && (
+                        <div className="flex gap-4 opacity-0 group-hover:opacity-100 transition-opacity pt-4">
+                           <button 
+                             onClick={() => navigator.clipboard.writeText(message.text)}
+                             className="flex items-center gap-2 text-xs font-bold text-muted-foreground hover:text-primary transition-colors"
+                           >
+                              <Copy size={14} /> Copy response
+                           </button>
+                        </div>
+                     )}
                   </div>
                 </motion.div>
               ))}
             </AnimatePresence>
-            <div ref={messagesEndRef} />
-          </motion.div>
+            <div ref={messagesEndRef} className="h-10" />
+          </div>
         )}
       </div>
 
-      {/* Input Area */}
-      <motion.div
-        className="p-4 border-t border-border"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <form onSubmit={handleSubmit} className="relative">
-          <div className="glass p-2 rounded-full flex items-center shadow-lg transition-all duration-300 hover:shadow-xl">
-            <input
+      {/* Minimal Input Bar */}
+      <div className="p-6 bg-background">
+        <form onSubmit={handleSubmit} className="relative max-w-3xl mx-auto">
+          <div className="relative paper-secondary p-1 border-border/80 focus-within:border-primary/30 transition-colors">
+            <textarea
               ref={inputRef}
-              type="text"
+              rows={1}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Type your message..."
-              className="flex-1 bg-transparent border-none outline-none px-4 py-2 text-foreground placeholder:text-muted-foreground"
-              disabled={isLoading}
+              onKeyDown={(e) => {
+                 if (e.key === 'Enter' && !e.shiftKey) {
+                    handleSubmit(e);
+                 }
+              }}
+              placeholder="Reply to Genie..."
+              className="w-full bg-transparent border-none outline-none px-4 py-4 text-base font-medium resize-none max-h-48 scrollbar-hide"
             />
-            <motion.button
-              type="submit"
-              className="p-3 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 transition-colors duration-200 flex items-center justify-center"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              disabled={!input.trim() || isLoading}
-            >
-              {isLoading ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-white"></div>
-              ) : (
-                <Send size={18} />
-              )}
-            </motion.button>
+            <div className="flex justify-between items-center px-4 pb-3">
+               <p className="text-[10px] font-bold text-muted-foreground/50 italic capitalize">Shift + Enter for new lines</p>
+               <button
+                  type="submit"
+                  disabled={!input.trim() || isLoading}
+                  className="bg-primary text-white p-2 rounded-lg disabled:opacity-20 transition-all hover:opacity-90"
+               >
+                  {isLoading ? <RefreshCw size={18} className="animate-spin" /> : <Send size={18} />}
+               </button>
+            </div>
           </div>
         </form>
-      </motion.div>
+        <p className="text-center text-[10px] text-muted-foreground/40 mt-4 uppercase tracking-[0.2em] font-medium">Verified using KMIT institutional archives</p>
+      </div>
     </div>
   );
 };
 
 export default Chat;
-

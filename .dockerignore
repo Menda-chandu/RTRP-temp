@@ -1,0 +1,8 @@
+node_modules
+apps/*/node_modules
+apps/chat/venv
+apps/web/dist
+.git
+.env
+*.log
+.DS_Store

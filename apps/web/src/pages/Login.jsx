@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mail, Lock, Github, ArrowRight } from 'lucide-react';
+import { Mail, Lock, Github, ArrowRight, RefreshCw } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Login = () => {

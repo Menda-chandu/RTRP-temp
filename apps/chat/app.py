@@ -22,10 +22,11 @@ dotenv_path = os.path.join(os.path.dirname(__file__), '../../.env')
 load_dotenv(dotenv_path=dotenv_path)
 
 # Initialize Flask app
-app = Flask(__name__, static_folder='../web/dist')
+app = Flask(__name__)
 CORS(app, resources={
     r"/*": {
         "origins": [
+            "https://kmit-genie.netlify.app",
             "https://rtrp-temp-git-main-chandumenda6465-gmailcoms-projects.vercel.app",
             "https://rtrp-temp.vercel.app",
             "http://localhost:5173"
@@ -42,7 +43,7 @@ def add_header(response):
     response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
     response.headers['Pragma'] = 'no-cache'
     response.headers['Expires'] = '0'
-    response.headers['Access-Control-Allow-Origin'] = 'https://rtrp-temp-git-main-chandumenda6465-gmailcoms-projects.vercel.app'
+    response.headers['Access-Control-Allow-Origin'] = 'https://kmit-genie.netlify.app'
     response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
     response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
     response.headers['Access-Control-Allow-Credentials'] = 'true'
@@ -369,13 +370,13 @@ def health_check():
         }), 500
 
 
-# Serve React App
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
-def serve_react_app(path):
-    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
-        return send_from_directory(app.static_folder, path)
-    return send_from_directory(app.static_folder, 'index.html')
+@app.route('/')
+def home():
+    return jsonify({
+        "message": "Campus Genie API is running",
+        "status": "online",
+        "version": "1.0.0"
+    })
 
 
 if __name__ == "__main__":

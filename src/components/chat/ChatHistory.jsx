@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Trash2, ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 
+const PYTHON_API_URL = import.meta.env.VITE_PYTHON_API_URL || 'http://localhost:2000';
+
 const ChatHistory = ({ userId, onSelect, visible, onToggle }) => {
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -16,7 +18,7 @@ const ChatHistory = ({ userId, onSelect, visible, onToggle }) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`http://127.0.0.1:2000/api/chat/history/${userId}`);
+      const response = await fetch(`${PYTHON_API_URL}/api/chat/history/${userId}`);
       const data = await response.json();
       
       if (!response.ok) {
@@ -41,7 +43,7 @@ const ChatHistory = ({ userId, onSelect, visible, onToggle }) => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`http://127.0.0.1:2000/api/chat/history/${userId}`, {
+      const response = await fetch(`${PYTHON_API_URL}/api/chat/history/${userId}`, {
         method: 'DELETE',
       });
       const data = await response.json();

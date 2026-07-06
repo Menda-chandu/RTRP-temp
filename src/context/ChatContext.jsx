@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from './AuthContext';
 
+const PYTHON_API_URL = import.meta.env.VITE_PYTHON_API_URL || 'http://localhost:2000';
+
 const ChatContext = createContext();
 
 export const useChat = () => useContext(ChatContext);
@@ -27,7 +29,7 @@ export const ChatProvider = ({ children }) => {
     setError(null);
     try {
       // Fetch chat history from the backend with user ID
-      const response = await axios.get(`http://127.0.0.1:2000/api/chat/history/${user?._id}`);
+      const response = await axios.get(`${PYTHON_API_URL}/api/chat/history/${user?._id}`);
       setMessages(response.data.messages || []); // Ensure messages are an array
     } catch (err) {
       console.error('Failed to fetch chat history:', err);
@@ -54,7 +56,7 @@ export const ChatProvider = ({ children }) => {
 
     try {
       // Send the query to the Flask backend with user ID
-      const response = await axios.post('http://127.0.0.1:2000/api/chat', { 
+      const response = await axios.post(`${PYTHON_API_URL}/api/chat`, { 
         query: text,
         userId: user?._id 
       });
@@ -101,7 +103,7 @@ export const ChatProvider = ({ children }) => {
   const clearChatHistory = async () => {
     try {
       setIsLoading(true);
-      await axios.delete(`http://127.0.0.1:2000/api/chat/history/${user?._id}`);
+      await axios.delete(`${PYTHON_API_URL}/api/chat/history/${user?._id}`);
       setMessages([]);
     } catch (error) {
       console.error('Error clearing chat history:', error);
@@ -114,7 +116,7 @@ export const ChatProvider = ({ children }) => {
   const rateMessage = async (messageId, rating) => {
     try {
       // Send the rating to the backend with user ID
-      await axios.post('http://127.0.0.1:2000/api/rate', { 
+      await axios.post(`${PYTHON_API_URL}/api/rate`, { 
         messageId, 
         rating,
         userId: user?._id 

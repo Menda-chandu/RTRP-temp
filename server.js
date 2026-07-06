@@ -21,15 +21,34 @@ if (!process.env.MONGODB_URI) {
 const app = express();
 
 // 🛡️ CORS
+const defaultOrigins = ['https://rtrp-temp.vercel.app', 'http://localhost:5173', 'http://192.168.0.116:5173'];
+let allowedOrigins = [...defaultOrigins];
+if (process.env.CORS_ORIGIN) {
+  const envOrigins = process.env.CORS_ORIGIN.split(',').map(o => o.trim()).filter(Boolean);
+  allowedOrigins = [...new Set([...allowedOrigins, ...envOrigins])];
+}
+
 app.use(cors({
-  origin: 'https://rtrp-temp.vercel.app',
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
 }));
 
 // 🔁 Handle OPTIONS preflight requests
 app.options('*', cors({
-  origin: 'https://rtrp-temp.vercel.app',
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
 }));
 

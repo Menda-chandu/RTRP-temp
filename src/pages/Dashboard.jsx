@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import { Calendar, Book, Users, Award, Clock, BookOpen, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 
+const PYTHON_API_URL = import.meta.env.VITE_PYTHON_API_URL || 'http://localhost:2000';
+
 const Dashboard = () => {
   const { user } = useAuth();
   const [attendanceData, setAttendanceData] = useState({
@@ -19,7 +21,7 @@ const Dashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const response = await fetch('http://localhost:2000/api/dashboard-data');
+      const response = await fetch(`${PYTHON_API_URL}/api/dashboard-data`);
       const data = await response.json();
       setAttendanceData(data.attendance);
       setTimetableData(data.timetable);

@@ -17,13 +17,25 @@ load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__, static_folder='build')
+
+# Configure CORS origins dynamically
+default_origins = [
+    "https://rtrp-temp-git-main-chandumenda6465-gmailcoms-projects.vercel.app",
+    "https://rtrp-temp.vercel.app",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://192.168.0.116:5173"
+]
+cors_origin_env = os.getenv("CORS_ORIGIN")
+if cors_origin_env:
+    additional_origins = [origin.strip() for origin in cors_origin_env.split(",") if origin.strip()]
+    cors_origins = list(set(default_origins + additional_origins))
+else:
+    cors_origins = default_origins
+
 CORS(app, resources={
     r"/*": {
-        "origins": [
-            "https://rtrp-temp-git-main-chandumenda6465-gmailcoms-projects.vercel.app",
-            "https://rtrp-temp.vercel.app",
-            "http://localhost:5173"
-        ],
+        "origins": cors_origins,
         "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         "allow_headers": ["Content-Type", "Authorization"],
         "supports_credentials": True
@@ -36,10 +48,6 @@ def add_header(response):
     response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
     response.headers['Pragma'] = 'no-cache'
     response.headers['Expires'] = '0'
-    response.headers['Access-Control-Allow-Origin'] = 'https://rtrp-temp-git-main-chandumenda6465-gmailcoms-projects.vercel.app'
-    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
-    response.headers['Access-Control-Allow-Credentials'] = 'true'
     return response
 
 
@@ -62,20 +70,28 @@ except Exception as e:
     raise
 
 
-# OpenRouter API Setup
+# LLM API Setup (OpenRouter or Local Ollama)
 try:
-    OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-    if not OPENROUTER_API_KEY:
-        raise ValueError("Missing OPENROUTER_API_KEY in .env")
+    openai_api_key = os.getenv("OPENROUTER_API_KEY")
+    openai_base_url = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
+    llm_model = os.getenv("LLM_MODEL", "qwen/qwen2.5-vl-32b-instruct:free")
 
-    # Initialize OpenRouter client
+    # If the key is missing or set to "ollama", fall back to local Ollama
+    if not openai_api_key or openai_api_key == "ollama":
+        print("⚠️ OPENROUTER_API_KEY not found or set to 'ollama'. Falling back to local Ollama...")
+        openai_base_url = "http://127.0.0.1:11434/v1"
+        openai_api_key = "ollama"
+        llm_model = "qwen2.5-coder:14b"
+    else:
+        print("🚀 OPENROUTER_API_KEY detected. Using OpenRouter service...")
+
     openrouter_client = OpenAI(
-        base_url="https://openrouter.ai/api/v1",
-        api_key=OPENROUTER_API_KEY,
+        base_url=openai_base_url,
+        api_key=openai_api_key,
     )
-    print("✅ OpenRouter client initialized")
+    print(f"✅ LLM client initialized (base_url: {openai_base_url}, model: {llm_model})")
 except Exception as e:
-    print(f"❌ Failed to initialize OpenRouter client: {e}")
+    print(f"❌ Failed to initialize LLM client: {e}")
     raise
 
 
@@ -102,7 +118,7 @@ except Exception as e:
 def llm(prompt):
     try:
         response = openrouter_client.chat.completions.create(
-            model="qwen/qwen2.5-vl-32b-instruct:free",
+            model=llm_model,
             messages=[
                 {"role": "system", "content": "You are a helpful assistant."},
                 {"role": "user", "content": prompt}
@@ -110,7 +126,8 @@ def llm(prompt):
             max_tokens=200,
             temperature=0.7,
         )
-        return response.choices[0].message.content
+        content = response.choices[0].message.content
+        return content if content is not None else "⚠️ Sorry, I received an empty response."
     except Exception as e:
         print(f"LLM call failed: {e}")
         return "⚠️ Sorry, I couldn't process that request."
@@ -134,6 +151,10 @@ Answer:
 """
 
     answer = llm(prompt_template.strip())
+    # Ensure answer is not None to prevent Pydantic validation errors
+    if answer is None:
+        answer = "⚠️ Sorry, I couldn't process that request."
+        
     chat_history.extend([
         HumanMessage(content=query),
         AIMessage(content=answer)
@@ -292,8 +313,8 @@ def chat():
         chat_history = []
         history_records = list(chat_history_collection.find({'user_id': user_id}))
         for record in history_records:
-            chat_history.append(HumanMessage(content=record['query']))
-            chat_history.append(AIMessage(content=record['response']))
+            chat_history.append(HumanMessage(content=record.get('query', '')))
+            chat_history.append(AIMessage(content=record.get('response') or ''))
 
         response = get_response(query, chat_history)
 

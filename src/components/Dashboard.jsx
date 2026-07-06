@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
+const PYTHON_API_URL = import.meta.env.VITE_PYTHON_API_URL || 'http://localhost:2000';
+
 const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState({
     attendance: null,
@@ -12,7 +14,7 @@ const Dashboard = () => {
 
   const fetchDashboardData = async () => {
     try {
-      const response = await axios.get('http://localhost:2000/api/dashboard-data');
+      const response = await axios.get(`${PYTHON_API_URL}/api/dashboard-data`);
       setDashboardData(response.data);
     } catch (err) {
       setError('Failed to fetch dashboard data');
@@ -24,7 +26,7 @@ const Dashboard = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.post('http://localhost:2000/api/update-dashboard', {
+      const response = await axios.post(`${PYTHON_API_URL}/api/update-dashboard`, {
         mobile_number: mobileNumber
       });
       setDashboardData(response.data.data);

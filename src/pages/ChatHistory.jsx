@@ -8,6 +8,8 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
+const PYTHON_API_URL = import.meta.env.VITE_PYTHON_API_URL || 'http://localhost:2000';
+
 const ChatHistoryPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -26,7 +28,7 @@ const ChatHistoryPage = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch(`http://127.0.0.1:2000/api/chat/history/${user._id}`);
+      const response = await fetch(`${PYTHON_API_URL}/api/chat/history/${user._id}`);
       const data = await response.json();
       
       if (!response.ok) {

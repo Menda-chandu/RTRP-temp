@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Link, useNavigate } from 'react-router-dom';
+
+const PYTHON_API_URL = import.meta.env.VITE_PYTHON_API_URL || 'http://localhost:2000';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRight, Send, Info, BookOpen, Users, Award, Building, Calendar } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -58,7 +60,7 @@ const Home = () => {
     
     try {
       // Connect to the real KMIT chatbot backend
-      const response = await axios.post('http://127.0.0.1:2000/api/chat', { query: demoInput });
+      const response = await axios.post(`${PYTHON_API_URL}/api/chat`, { query: demoInput });
       
       // Replace loading message with actual response
       setDemoMessages(prev => {

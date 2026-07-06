@@ -16,9 +16,9 @@ export default defineConfig({
     host: true,
     proxy: {
       '/api': {
-        target: 'https://rtrp-temp-1.onrender.com',
+        target: 'http://localhost:4000',
         changeOrigin: true,
-        secure: true,
+        secure: false,
         rewrite: (path) => path,
         configure: (proxy, _options) => {
           proxy.on('error', (err, _req, _res) => {

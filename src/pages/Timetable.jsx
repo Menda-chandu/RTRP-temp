@@ -308,6 +308,8 @@
 
 import React, { useState } from 'react';
 
+const PYTHON_API_URL = import.meta.env.VITE_PYTHON_API_URL || 'http://localhost:2000';
+
 const Timetable = () => {
   const [mobileNumber, setMobileNumber] = useState('');
   const [result, setResult] = useState(null);
@@ -320,7 +322,7 @@ const Timetable = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch('http://localhost:3000/api/update-dashboard', {
+      const response = await fetch(`${PYTHON_API_URL}/api/update-dashboard`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

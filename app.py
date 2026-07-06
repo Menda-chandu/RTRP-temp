@@ -76,7 +76,7 @@ except Exception as e:
 try:
     openai_api_key = os.getenv("OPENROUTER_API_KEY")
     openai_base_url = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
-    llm_model = os.getenv("LLM_MODEL", "qwen/qwen2.5-vl-32b-instruct:free")
+    llm_model = os.getenv("LLM_MODEL", "cohere/north-mini-code:free")
 
     # If the key is missing or set to "ollama", fall back to local Ollama
     if not openai_api_key or openai_api_key == "ollama":
@@ -309,23 +309,23 @@ def chat():
 
         if not query:
             return jsonify({'error': 'Query is required'}), 400
-        if not user_id or user_id == 'undefined':
-            return jsonify({'error': 'User ID is required'}), 400
 
         chat_history = []
-        history_records = list(chat_history_collection.find({'user_id': user_id}))
-        for record in history_records:
-            chat_history.append(HumanMessage(content=record.get('query', '')))
-            chat_history.append(AIMessage(content=record.get('response') or ''))
+        if user_id and user_id != 'undefined':
+            history_records = list(chat_history_collection.find({'user_id': user_id}))
+            for record in history_records:
+                chat_history.append(HumanMessage(content=record.get('query', '')))
+                chat_history.append(AIMessage(content=record.get('response') or ''))
 
         response = get_response(query, chat_history)
 
-        chat_history_collection.insert_one({
-            'user_id': user_id,
-            'query': query,
-            'response': response,
-            'timestamp': datetime.now()
-        })
+        if user_id and user_id != 'undefined':
+            chat_history_collection.insert_one({
+                'user_id': user_id,
+                'query': query,
+                'response': response,
+                'timestamp': datetime.now()
+            })
 
         return jsonify({'response': response})
 

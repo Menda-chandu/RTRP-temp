@@ -21,7 +21,14 @@ if (!process.env.MONGODB_URI) {
 const app = express();
 
 // 🛡️ CORS
-const defaultOrigins = ['https://rtrp-temp.vercel.app', 'http://localhost:5173', 'http://192.168.0.116:5173'];
+const defaultOrigins = [
+  'https://rtrp-temp.vercel.app',
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  'http://192.168.0.116:5173',
+  'http://localhost:4000',
+  'http://127.0.0.1:4000'
+];
 let allowedOrigins = [...defaultOrigins];
 if (process.env.CORS_ORIGIN) {
   const envOrigins = process.env.CORS_ORIGIN.split(',').map(o => o.trim()).filter(Boolean);

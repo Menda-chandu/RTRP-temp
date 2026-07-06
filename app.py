@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify, send_from_directory, Response
 from flask_cors import CORS
 import os
 import json
@@ -300,6 +300,24 @@ def clear_chat_history(user_id):
         return jsonify({'error': str(e)}), 500
 
 
+def llm_stream(prompt):
+    try:
+        response = openrouter_client.chat.completions.create(
+            model=llm_model,
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=200,
+            temperature=0.7,
+            stream=True,
+        )
+        return response
+    except Exception as e:
+        print(f"LLM stream call failed: {e}")
+        raise
+
+
 @app.route('/api/chat', methods=['POST'])
 def chat():
     try:
@@ -310,6 +328,9 @@ def chat():
         if not query:
             return jsonify({'error': 'Query is required'}), 400
 
+        search_results = vectorstore.similarity_search(query, k=4)
+        context = "\n".join([result.page_content for result in search_results])
+
         chat_history = []
         if user_id and user_id != 'undefined':
             history_records = list(chat_history_collection.find({'user_id': user_id}))
@@ -317,17 +338,44 @@ def chat():
                 chat_history.append(HumanMessage(content=record.get('query', '')))
                 chat_history.append(AIMessage(content=record.get('response') or ''))
 
-        response = get_response(query, chat_history)
+        history_text = " ".join([f"{msg.content}" for msg in chat_history])
+        prompt_template = f"""
+Answer the question based only on the following context:
+{context}
 
-        if user_id and user_id != 'undefined':
-            chat_history_collection.insert_one({
-                'user_id': user_id,
-                'query': query,
-                'response': response,
-                'timestamp': datetime.now()
-            })
+Chat History:
+{history_text}
 
-        return jsonify({'response': response})
+Question: {query}
+Answer:
+"""
+
+        def generate():
+            try:
+                stream = llm_stream(prompt_template.strip())
+                full_response = ""
+                for chunk in stream:
+                    if chunk.choices and len(chunk.choices) > 0:
+                        delta = chunk.choices[0].delta
+                        content = getattr(delta, 'content', '') or ''
+                        if content:
+                            full_response += content
+                            yield f"data: {json.dumps({'token': content})}\n\n"
+                
+                # Save chat history after stream finishes
+                if user_id and user_id != 'undefined' and full_response:
+                    chat_history_collection.insert_one({
+                        'user_id': user_id,
+                        'query': query,
+                        'response': full_response,
+                        'timestamp': datetime.now()
+                    })
+            except Exception as stream_err:
+                print(f"Streaming error: {stream_err}")
+                yield f"data: {json.dumps({'error': str(stream_err)})}\n\n"
+            yield "data: [DONE]\n\n"
+
+        return Response(generate(), mimetype='text/event-stream')
 
     except Exception as e:
         print(f"Chat error: {str(e)}")

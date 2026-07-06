@@ -49,8 +49,9 @@ const Home = () => {
     setDemoInput('');
     
     // Set loading state
+    const loadingMessageId = Date.now() + 1;
     const loadingMessage = {
-      id: Date.now() + 1,
+      id: loadingMessageId,
       text: '...',
       sender: 'bot',
       isLoading: true
@@ -59,26 +60,70 @@ const Home = () => {
     setDemoMessages(prev => [...prev, loadingMessage]);
     
     try {
-      // Connect to the real KMIT chatbot backend
-      const response = await axios.post(`${PYTHON_API_URL}/api/chat`, { query: demoInput });
+      const response = await fetch(`${PYTHON_API_URL}/api/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ query: demoInput })
+      });
       
-      // Replace loading message with actual response
+      if (!response.ok) {
+        throw new Error('Failed to connect to chatbot');
+      }
+      
+      // Replace loading message with empty bot message to start streaming
+      const botMessageId = Date.now() + 2;
       setDemoMessages(prev => {
-        const filtered = prev.filter(msg => !msg.isLoading);
+        const filtered = prev.filter(msg => msg.id !== loadingMessageId);
         return [...filtered, {
-          id: Date.now() + 2,
-          text: response.data.response,
+          id: botMessageId,
+          text: '',
           sender: 'bot'
         }];
       });
+      
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let botText = '';
+      
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const dataStr = line.slice(6).trim();
+            if (dataStr === '[DONE]') break;
+            
+            try {
+              const data = JSON.parse(dataStr);
+              if (data.token) {
+                botText += data.token;
+                setDemoMessages(prev =>
+                  prev.map(msg =>
+                    msg.id === botMessageId ? { ...msg, text: botText } : msg
+                  )
+                );
+              } else if (data.error) {
+                throw new Error(data.error);
+              }
+            } catch (jsonErr) {
+              // Ignore partial JSON parsing errors
+            }
+          }
+        }
+      }
     } catch (error) {
       console.error('Error fetching response from KMIT chatbot:', error);
       
-      // Replace loading message with error message
       setDemoMessages(prev => {
-        const filtered = prev.filter(msg => !msg.isLoading);
+        const filtered = prev.filter(msg => msg.id !== loadingMessageId);
         return [...filtered, {
-          id: Date.now() + 2,
+          id: Date.now() + 3,
           text: 'Sorry, I encountered an error while processing your request. Please try again.',
           sender: 'bot',
           isError: true

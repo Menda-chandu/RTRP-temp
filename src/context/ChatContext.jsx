@@ -54,38 +54,82 @@ export const ChatProvider = ({ children }) => {
     setIsLoading(true);
     setError(null);
 
+    const botMessageId = `${Date.now() + 1}`;
+    const botMessage = {
+      id: botMessageId,
+      text: '',
+      sender: 'bot',
+      timestamp: new Date().toISOString(),
+    };
+
     try {
-      // Send the query to the Flask backend with user ID
-      const response = await axios.post(`${PYTHON_API_URL}/api/chat`, { 
-        query: text,
-        userId: user?._id 
+      const response = await fetch(`${PYTHON_API_URL}/api/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: text,
+          userId: user?._id
+        })
       });
 
-      // Add bot response to the chat
-      const botMessage = {
-        id: `${Date.now() + 1}`,
-        text: Array.isArray(response.data.response)
-          ? response.data.response.join('\n') // Join bullet points into a single string
-          : response.data.response || 'No response available.',
-        sender: 'bot',
-        timestamp: new Date().toISOString(),
-      };
+      if (!response.ok) {
+        throw new Error('Failed to connect to chatbot service');
+      }
 
+      setIsLoading(false); // Disable spinner once stream begins
       setMessages((prevMessages) => [...prevMessages, botMessage]);
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let botText = '';
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n');
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const dataStr = line.slice(6).trim();
+            if (dataStr === '[DONE]') break;
+
+            try {
+              const data = JSON.parse(dataStr);
+              if (data.token) {
+                botText += data.token;
+                setMessages((prevMessages) =>
+                  prevMessages.map((msg) =>
+                    msg.id === botMessageId ? { ...msg, text: botText } : msg
+                  )
+                );
+              } else if (data.error) {
+                throw new Error(data.error);
+              }
+            } catch (jsonErr) {
+              // Ignore partial JSON parsing errors
+            }
+          }
+        }
+      }
     } catch (err) {
       console.error('Failed to send message:', err);
       setError('Failed to send message. Please try again.');
 
-      // Add error message to chat
-      const errorMessage = {
-        id: `${Date.now() + 1}`,
-        text: 'Sorry, I encountered an error while processing your request. Please try again.',
-        sender: 'bot',
-        timestamp: new Date().toISOString(),
-        isError: true,
-      };
-
-      setMessages((prevMessages) => [...prevMessages, errorMessage]);
+      setMessages((prevMessages) => {
+        const filtered = prevMessages.filter((msg) => msg.id !== botMessageId);
+        const errorMessage = {
+          id: botMessageId,
+          text: 'Sorry, I encountered an error while processing your request. Please try again.',
+          sender: 'bot',
+          timestamp: new Date().toISOString(),
+          isError: true,
+        };
+        return [...filtered, errorMessage];
+      });
     } finally {
       setIsLoading(false);
     }
